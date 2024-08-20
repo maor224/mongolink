@@ -1,6 +1,10 @@
 import asyncio
 
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from motor.motor_asyncio import (
+    AsyncIOMotorClient,
+    AsyncIOMotorCollection,
+    AsyncIOMotorDatabase,
+)
 
 from src.config.settings.connection import ConnectionSettings
 
@@ -27,3 +31,9 @@ class MongoDBConnection:
     async def create_collection(self, database_name: str, collection_name: str) -> None:
         database = await self.get_database(database_name)
         await database.create_collection(collection_name)
+
+    async def get_collection(
+        self, database_name: str, collection_name: str
+    ) -> AsyncIOMotorCollection:
+        database = await self.get_database(database_name)
+        return database[collection_name]
