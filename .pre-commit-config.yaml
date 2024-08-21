@@ -10,13 +10,3 @@ repos:
         language: system
         types: [python]
         args: [--line-length=88]
-
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.10.0  # Update to the latest stable version if needed
-    hooks:
-      - id: isort
-        name: isort
-        entry: isort
-        language: system
-        types: [python]
-        args: [--profile=black]
