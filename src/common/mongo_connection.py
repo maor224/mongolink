@@ -1,4 +1,4 @@
-import asyncio
+import threading
 
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
@@ -11,25 +11,24 @@ from src.config.settings.connection import ConnectionSettings
 
 class MongoDBConnection:
     _instance = None
-    _lock = asyncio.Lock()  # Ensure thread-safe instantiation
+    _lock = threading.Lock()
 
     def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            with cls._lock:
-                if cls._instance is None:
-                    cls._instance = super(MongoDBConnection, cls).__new__(
-                        cls, *args, **kwargs
-                    )
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super(MongoDBConnection, cls).__new__(
+                    cls, *args, **kwargs
+                )
         return cls._instance
 
     def __init__(self):
-        if not hasattr(self, "initialized"):  # Ensure initialization runs only once
+        if not hasattr(self, "initialized"):
             self.settings = ConnectionSettings()
             self.client = None
             self.initialized = True
 
     async def initialize_client(self):
-        if self.client is None:  # Only initialize if not already done
+        if self.client is None:
             connection_string = await self.get_connection_string()
             self.client = AsyncIOMotorClient(connection_string)
 
