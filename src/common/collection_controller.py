@@ -8,15 +8,17 @@ D = TypeVar("D", bound=BaseDocument[M])
 
 
 class GenericCollectionController(Generic[M, D]):
-    model_class: Type[M]
-    document_class: Type[D]
+    # model_class: Type[M]
+    # document_class: Type[D]
 
     def __init__(self, model_class: Type[M], document_class: Type[D]):
         self.model_class = model_class
         self.document_class = document_class
 
     async def create(self, **kwargs) -> D:
+        print(self.model_class)
         model_instance = self.model_class(**kwargs)
+        print(model_instance)
         document_instance = self.document_class(**model_instance.dict())
         await document_instance.insert()
         return document_instance
