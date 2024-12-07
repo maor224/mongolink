@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from typing import TypeVar, Generic
 from src.common.models.beanie.base_document import BaseDocument
@@ -6,7 +7,21 @@ from src.common.mongo_connection import MongoDBConnection
 from src.common.models.base_model import AbstractModel
 from beanie import init_beanie
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    connection = MongoDBConnection()
+    await connection.initialize_client()  # Replace with your database name
+
+    # Initialize Beanie with the database
+    db = await connection.get_database("users")
+    await init_beanie(db, document_models=[UserDocument])  # Assuming UserDocument is your Beanie model
+
+    yield
+
+    # Close the connection when the app shuts down
+    await connection.client.close()
+
+app = FastAPI(lifespan=lifespan)
 
 # Type variables
 M = TypeVar("M", bound=AbstractModel)
@@ -42,9 +57,8 @@ class GenericAPI(Generic[M, D]):
         @app.post(f"/{model_name}/")
         async def create_document(model: User):
             try:
-                return await self.controller.create(**model.dict())
+                return await self.controller.create(**model.model_dump())
             except Exception as e:
-                print(e.with_traceback())
                 raise HTTPException(status_code=400, detail=str(e))
 
         @app.get(f"/{model_name}/{{id}}")
@@ -76,15 +90,3 @@ user_controller = GenericCollectionController[User, UserDocument](User, UserDocu
 # Create API instance with User as M and specify database name
 db_name = "users"  # Replace with your actual database name
 user_api = GenericAPI[User, UserDocument](user_controller, db_name)
-
-
-# Initialize the database connection on FastAPI startup
-@app.on_event("startup")
-async def on_startup():
-    global connection
-    connection = MongoDBConnection()
-    await connection.initialize_client()
-
-    # Initialize Beanie with the database
-    db = await connection.get_database(db_name)
-    await init_beanie(db, document_models=[UserDocument])

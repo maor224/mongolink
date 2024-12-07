@@ -30,10 +30,10 @@ class MongoDBConnection:
     async def initialize_client(self):
         if self.client is None:
             connection_string = await self.get_connection_string()
-            self.client = AsyncIOMotorClient(connection_string)
+            self.client = AsyncIOMotorClient(connection_string, tlsInsecure=True)
 
     async def get_connection_string(self) -> str:
-        return f"mongodb+srv://{self.settings.username}:{self.settings.password}@{self.settings.host}"
+        return f"mongodb+srv://{self.settings.username}:{self.settings.password}@{self.settings.host}?retryWrites=true&w=majority&ssl=true"
 
     async def get_database(self, database_name: str) -> AsyncIOMotorDatabase:
         if not self.client:

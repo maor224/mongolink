@@ -16,10 +16,8 @@ class GenericCollectionController(Generic[M, D]):
         self.document_class = document_class
 
     async def create(self, **kwargs) -> D:
-        print(self.model_class)
         model_instance = self.model_class(**kwargs)
-        print(model_instance)
-        document_instance = self.document_class(**model_instance.dict())
+        document_instance = self.document_class(**model_instance.model_dump())
         await document_instance.insert()
         return document_instance
 
